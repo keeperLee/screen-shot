@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Water Ball</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+    
+    .water-ball-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 210px;
+      height: 100px;
+      z-index: 2147483647;
+      cursor: move;
+      user-select: none;
+    }
+    
+    .water-balls-wrapper {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .water-ball {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .water-wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      transition: height 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .water-wave::before,
+    .water-wave::after {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 8px;
+      top: -4px;
+      left: -50%;
+      background: transparent;
+      border-radius: 40%;
+    }
+    
+    .water-wave::before {
+      animation: wave-x 3s infinite linear, wave-y 2.5s infinite ease-in-out;
+      border-top: 2px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .water-wave::after {
+      animation: wave-x 3s infinite linear reverse, wave-y 3s infinite ease-in-out -1.25s;
+      border-top: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .percentage-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    
+    .label {
+      font-size: 12px;
+      color: #333;
+      margin-bottom: 2px;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+    }
+    
+    .percentage {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+    }
+    
+    @keyframes wave-x {
+      0% {
+        transform: translateX(-50%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes wave-y {
+      0%, 100% {
+        transform: translateY(-2px);
+      }
+      50% {
+        transform: translateY(2px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="water-ball-container" id="waterBall">
+    <div class="water-balls-wrapper">
+      <div class="water-ball year-ball">
+        <div class="water-wave" id="yearWave"></div>
+        <div class="percentage-container">
+          <div class="label">今年已过去</div>
+          <span class="percentage" id="yearPercentage">0%</span>
+        </div>
+      </div>
+      <div class="water-ball day-ball">
+        <div class="water-wave" id="dayWave"></div>
+        <div class="percentage-container">
+          <div class="label">今日已过去</div>
+          <span class="percentage" id="dayPercentage">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 计算今年已过去的时间百分比
+    function calculateYearProgress() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year + 1, 0, 1);
+      
+      const totalMilliseconds = endOfYear - startOfYear;
+      const elapsedMilliseconds = now - startOfYear;
+      
+      return (elapsedMilliseconds / totalMilliseconds) * 100;
+    }
+    
+    // 计算今天已过去的时间百分比
+    function calculateDayProgress() {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      
+      const totalMilliseconds = endOfDay - startOfDay;
+      const elapsedMilliseconds = now - startOfDay;
+      
+      return (elapsedMilliseconds / totalMilliseconds) * 100;
+    }
+    
+    // 根据百分比获取颜色
+    function getColorByPercentage(percentage) {
+      // 年进度使用绿色
+      return '#4CAF50';
+    }
+    
+    // 根据百分比获取日进度颜色
+    function getDayColorByPercentage(percentage) {
+      // 日进度使用蓝色
+      return '#2196F3';
+    }
+    
+    // 更新水球显示
+    function updateWaterBall() {
+      const yearProgress = calculateYearProgress();
+      const dayProgress = calculateDayProgress();
+      
+      const yearWave = document.getElementById('yearWave');
+      const yearPercentage = document.getElementById('yearPercentage');
+      
+      const dayWave = document.getElementById('dayWave');
+      const dayPercentage = document.getElementById('dayPercentage');
+      
+      if (yearWave && yearPercentage) {
+        // 直接使用年度进度百分比作为填充高度
+        yearWave.style.height = `${yearProgress}%`;
+        yearWave.style.top = 'auto';
+        yearWave.style.bottom = '0';
+        
+        // 使用绿色作为年进度颜色
+        yearWave.style.background = getColorByPercentage(yearProgress);
+        
+        yearPercentage.textContent = `${yearProgress.toFixed(1)}%`;
+      }
+      
+      if (dayWave && dayPercentage) {
+        // 直接使用日进度百分比作为填充高度
+        dayWave.style.height = `${dayProgress}%`;
+        dayWave.style.top = 'auto';
+        dayWave.style.bottom = '0';
+        
+        // 使用蓝色作为日进度颜色
+        dayWave.style.background = getDayColorByPercentage(dayProgress);
+        
+        dayPercentage.textContent = `${dayProgress.toFixed(1)}%`;
+      }
+    }
+    
+    // 添加拖拽功能
+    const container = document.getElementById('waterBall');
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    
+    container.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = container.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      
+      container.style.left = `${initialX + dx}px`;
+      container.style.top = `${initialY + dy}px`;
+      container.style.right = 'auto';
+      container.style.bottom = 'auto';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+    
+    // 初始化
+    updateWaterBall();
+    setInterval(updateWaterBall, 1000);
+    
+    // 监听来自后台的消息
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'toggleWaterBall') {
+        if (request.show) {
+          document.body.style.display = 'block';
+        } else {
+          document.body.style.display = 'none';
+        }
+        sendResponse({ success: true });
+        return true;
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -9,14 +9,15 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, 'index.html'),
         background: resolve(__dirname, 'src/background/background.js'),
-        content: resolve(__dirname, 'src/content-scripts/content.js')
+        content: resolve(__dirname, 'src/content-scripts/content.js'),
+        waterball: resolve(__dirname, 'src/content-scripts/waterball.js')
       },
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'content.js') {
-            return 'assets/content.js';
+          if (assetInfo.name === 'content.js' || assetInfo.name === 'waterball.js') {
+            return `assets/${assetInfo.name}`;
           }
           return 'assets/[name]-[hash].[ext]';
         }

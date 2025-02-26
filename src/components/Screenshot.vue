@@ -1,122 +1,157 @@
 <template>
-  <div class="screenshot-container">
-    <button @click="takeScreenshot" class="screenshot-btn" :disabled="isCapturing">
-      {{ isCapturing ? '截图中...' : '开始截图' }}
-    </button>
-    <div v-if="error" class="error-message">
-      {{ error }}
+  <div class="time-container">
+    <div class="year-progress">
+      <h3>今年已过去</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: `${yearProgress}%` }"></div>
+      </div>
+      <div class="progress-text">{{ yearProgress.toFixed(2) }}%</div>
+      <div class="day-progress">
+        第 {{ currentDay }} 天 / 共 {{ totalDays }} 天
+      </div>
     </div>
+    
+    <div class="today-progress">
+      <h3>今日已过去</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: `${todayProgress}%` }"></div>
+      </div>
+      <div class="progress-text">{{ todayProgress.toFixed(2) }}%</div>
+    </div>
+    
+    <!-- 截图功能已隐藏 -->
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
-const isCapturing = ref(false)
-const error = ref('')
+const yearProgress = ref(0)
+const currentDay = ref(0)
+const totalDays = ref(0)
+const todayProgress = ref(0)
+let timer = null
 
-const injectContentScript = async (tabId) => {
-  try {
-    // 先检查是否已经注入
-    const checkResult = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => window.hasScreenshotExtension
-    });
-
-    if (checkResult[0]?.result) {
-      console.log('Content script already exists');
-      return;
-    }
-
-    // 注入主要的content script
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['assets/content.js']
-    });
-
-    // 等待脚本初始化
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log('Content script injected successfully');
-  } catch (err) {
-    console.error('Failed to inject content script:', err);
-    throw new Error('无法注入截图脚本: ' + err.message);
-  }
-};
-
-const takeScreenshot = async () => {
-  error.value = ''
-  isCapturing.value = true
-  
-  try {
-    console.log('开始查询当前标签页...');
-    const [tab] = await chrome.tabs.query({ 
-      active: true, 
-      currentWindow: true,
-      status: 'complete'  // 确保页面已加载完成
-    });
-    
-    if (!tab?.id) {
-      throw new Error('无法获取当前标签页');
-    }
-
-    // 检查是否可以访问页面
-    if (!tab.url.startsWith('http')) {
-      throw new Error('无法在此页面使用截图功能');
-    }
-    
-    // 确保content script已注入
-    await injectContentScript(tab.id);
-    
-    console.log('发送截图消息到标签页:', tab.id);
-    const response = await new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(tab.id, { action: 'takeScreenshot' }, response => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (response?.error) {
-          reject(new Error(response.error));
-        } else {
-          resolve(response);
-        }
-      });
-    });
-    
-    console.log('截图完成:', response);
-  } catch (err) {
-    console.error('截图失败:', err);
-    error.value = `截图失败: ${err.message}`;
-  } finally {
-    isCapturing.value = false;
-  }
+// 计算今年的总天数（考虑闰年）
+const calculateTotalDays = (year) => {
+  return new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
 }
+
+// 计算今年已过去的天数
+const calculateCurrentDay = (now, startOfYear) => {
+  const diffTime = now - startOfYear;
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 因为第一天是第1天
+}
+
+// 计算今日已过去的时间百分比
+const calculateTodayProgress = () => {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  
+  const totalMilliseconds = endOfDay - startOfDay;
+  const elapsedMilliseconds = now - startOfDay;
+  
+  return (elapsedMilliseconds / totalMilliseconds) * 100;
+}
+
+// 计算今年已过去的时间百分比
+const calculateYearProgress = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const startOfYear = new Date(year, 0, 1) // 1月1日
+  const endOfYear = new Date(year + 1, 0, 1) // 下一年的1月1日
+  
+  // 更新天数信息
+  totalDays.value = calculateTotalDays(year)
+  currentDay.value = calculateCurrentDay(now, startOfYear)
+  
+  const totalMilliseconds = endOfYear - startOfYear
+  const elapsedMilliseconds = now - startOfYear
+  
+  return (elapsedMilliseconds / totalMilliseconds) * 100
+}
+
+// 更新时间百分比
+const updateProgress = () => {
+  yearProgress.value = calculateYearProgress()
+  todayProgress.value = calculateTodayProgress()
+}
+
+// 组件挂载时开始计时器
+onMounted(() => {
+  updateProgress() // 立即更新一次
+  timer = setInterval(updateProgress, 1000) // 每秒更新一次，使今日进度更流畅
+})
+
+// 组件卸载时清除计时器
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer)
+  }
+})
 </script>
 
 <style scoped>
-.screenshot-container {
+.time-container {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.screenshot-btn {
-  padding: 8px 16px;
+.year-progress, .today-progress {
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.year-progress h3, .today-progress h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.year-progress .progress-fill {
+  height: 100%;
   background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 6px;
+  transition: width 0.5s ease;
 }
 
-.screenshot-btn:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.today-progress .progress-fill {
+  height: 100%;
+  background-color: #2196F3;
+  border-radius: 6px;
+  transition: width 0.3s linear;
 }
 
-.screenshot-btn:hover:not(:disabled) {
-  background-color: #45a049;
-}
-
-.error-message {
-  color: red;
-  margin-top: 8px;
+.year-progress .progress-text {
   font-size: 14px;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-bottom: 4px;
+}
+
+.today-progress .progress-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: #2196F3;
+  margin-bottom: 4px;
+}
+
+.day-progress {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
 }
 </style> 
