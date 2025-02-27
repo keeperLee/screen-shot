@@ -80,14 +80,14 @@
                     <div class="water-ball year-ball">
                         <div class="water-wave"></div>
                         <div class="percentage-container">
-                            <div class="label">今年已过去</div>
+                            <div class="label">年进度</div>
                             <div class="percentage">0%</div>
                         </div>
                     </div>
                     <div class="water-ball day-ball">
                         <div class="water-wave"></div>
                         <div class="percentage-container">
-                            <div class="label">今日已过去</div>
+                            <div class="label">日进度</div>
                             <div class="percentage">0%</div>
                         </div>
                     </div>
@@ -246,15 +246,31 @@
     }
 
     // 根据百分比获取颜色
-    function getColorByPercentage (percentage) {
-        // 修改颜色方案
-        return percentage < 50 ? '#4CAF50' : '#4CAF50'; // 年进度使用绿色
+    function getColorByPercentage(percentage) {
+        // 使用渐变色，从浅绿色到深绿色
+        if (percentage < 25) {
+            return '#81C784'; // 浅绿色
+        } else if (percentage < 50) {
+            return '#66BB6A'; // 中绿色
+        } else if (percentage < 75) {
+            return '#4CAF50'; // 绿色
+        } else {
+            return '#388E3C'; // 深绿色
+        }
     }
 
     // 根据百分比获取日进度颜色
-    function getDayColorByPercentage (percentage) {
-        // 日进度使用蓝色
-        return percentage < 50 ? '#2196F3' : '#2196F3';
+    function getDayColorByPercentage(percentage) {
+        // 使用渐变色，从浅蓝色到深蓝色
+        if (percentage < 25) {
+            return '#90CAF9'; // 浅蓝色
+        } else if (percentage < 50) {
+            return '#64B5F6'; // 中蓝色
+        } else if (percentage < 75) {
+            return '#42A5F5'; // 蓝色
+        } else {
+            return '#1E88E5'; // 深蓝色
+        }
     }
 
     // 显示水球
@@ -376,8 +392,8 @@
     style.textContent = `
         .water-ball-container {
             position: fixed;
-            width: 210px;
-            height: 100px;
+            width: 170px; /* 减小整体宽度 */
+            height: 80px; /* 减小整体高度 */
             z-index: 2147483647;
             cursor: move;
             user-select: none;
@@ -391,16 +407,20 @@
             height: 100%;
         }
         .water-ball {
-            width: 100px;
-            height: 100px;
+            width: 80px; /* 减小水球尺寸 */
+            height: 80px; /* 减小水球尺寸 */
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9); /* 增加不透明度 */
+            box-shadow: 0 3px 12px rgba(0,0,0,0.15); /* 改进阴影效果 */
             overflow: hidden;
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: transform 0.2s ease; /* 添加悬停动画 */
+        }
+        .water-ball:hover {
+            transform: scale(1.05); /* 悬停时轻微放大 */
         }
         .water-wave {
             position: absolute;
@@ -423,25 +443,31 @@
         }
         .water-wave::before {
             animation: wave-x 3s infinite linear, wave-y 2.5s infinite ease-in-out;
-            border-top: 2px solid rgba(255, 255, 255, 0.4);
+            border-top: 2px solid rgba(255, 255, 255, 0.5); /* 增加波浪可见度 */
         }
         .water-wave::after {
             animation: wave-x 3s infinite linear reverse, wave-y 3s infinite ease-in-out -1.25s;
-            border-top: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
         }
         .percentage-container {
             position: relative;
             z-index: 1;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
         }
         .label {
-            font-size: 12px;
+            font-size: 10px; /* 减小标签字体 */
             color: #333;
             margin-bottom: 2px;
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+            font-weight: 500;
         }
         .percentage {
-            font-size: 18px;
+            font-size: 16px; /* 减小百分比字体 */
             font-weight: bold;
             color: #333;
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
@@ -461,6 +487,15 @@
             50% {
                 transform: translateY(2px);
             }
+        }
+        /* 添加一个淡入效果 */
+        .water-ball-container {
+            opacity: 0;
+            animation: fade-in 0.5s ease forwards;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     `;
 
