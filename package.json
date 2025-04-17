@@ -1,6 +1,6 @@
 {
   "name": "vue-screenshot-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node build.js",

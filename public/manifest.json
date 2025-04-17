@@ -2,21 +2,19 @@
   "manifest_version": 3,
   "name": "万能宝",
   "description": "显示时间进度的小工具",
-  "version": "1.0",
+  "version": "1.0.1",
   "action": {
     "default_popup": "index.html",
     "default_icon": {
-      "16": "icons/icon16.svg",
-      "48": "icons/icon48.svg",
-      "128": "icons/icon.svg"
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
     }
   },
   "permissions": [
     "storage",
     "tabs",
-    "activeTab",
-    "scripting",
-    "webNavigation"
+    "activeTab"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -34,9 +32,9 @@
     "matches": ["<all_urls>"]
   }],
   "icons": {
-    "16": "icons/icon16.svg",
-    "48": "icons/icon48.svg",
-    "128": "icons/icon.svg"
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "background": {
     "service_worker": "assets/background.js",
